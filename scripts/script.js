@@ -69,18 +69,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getData = async (url) => {
         const data = await fetch(url);
-
         if (!data.ok) {
 			throw new Error(`Возникла ошибка по адресу: ${data.url} Статус ошибки: ${data.status}: ${data.statusText}`);
 		}
 		return await data.json();
     };
 
-    const getGoods = (callback, value) => {
+    const getGoods = (callback, prop, value) => {
         getData('db.json')
             .then(data => {
                 if(value) {
-                    callback(data.filter(item => item.category === value))
+                    callback(data.filter(item => item[prop] === value))
                 } else {
                     callback(data);
                 }
@@ -102,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Cтраница категорий товаров
     try {
         const goodsList = document.querySelector('.goods__list');
 
@@ -148,33 +148,110 @@ document.addEventListener('DOMContentLoaded', () => {
             // for (const item of data) {
             //     console.log(item);
             // }
-
+            
             data.forEach(item => {
                 const card = createCard(item);
                 goodsList.append(card);
             });
+            // 2 вариант
+            // const arr = data.map(createCard);
+            // goodsList.append(...arr);
         };
 
-        const navigation = document.querySelector('.navigation');
+        /* Замена title */
+        // 1 способ (по клику)
+        // const navigation = document.querySelector('.navigation');
+        // let goodsTitle = document.querySelector('.goods__title');
+
+        // navigation.addEventListener('click', ({target}) => {
+        //     console.log(target);
+        //     if(target.classList.contains('navigation__link') && target.closest('.navigation__item')) {
+        //         goodsTitle.textContent = target.textContent;
+        //     }
+        // })
+
+        // 2 способ (по hash ссылки)
         let goodsTitle = document.querySelector('.goods__title');
 
-        navigation.addEventListener('click', ({target}) => {
-            console.log(target);
-            if(target.classList.contains('navigation__link') && target.closest('.navigation__item')) {
-                goodsTitle.textContent = target.textContent;
-            }
-        })
+        const changeTitle = () => {
+            goodsTitle.textContent = document.querySelector(`[href*="#${hash}"]`).textContent;
+        }
+        
 
         window.addEventListener('hashchange', () => {
             hash = location.hash.substring(1);
-            getGoods(renderGoodsList, hash);
-
+            getGoods(renderGoodsList, 'category', hash);
+            changeTitle();
         });
-        getGoods(renderGoodsList, hash);
+        changeTitle();
+        getGoods(renderGoodsList, 'category', hash);
 
     } catch (err) {
         console.warn(err);
     }
 
+    // Страница товара
+    try {
+      if (!document.querySelector('.card-good')) {
+        throw 'Это не страница товара'
+      }  
+
+        // Генерация li (списка options) для select
+        const generateList = (data) => data.reduce((html, item, i) => html +
+         `<li class="card-good__select-item" data-id="${i}">${item}</li>`, '')
+
+        const cardGoodImage = document.querySelector('.card-good__image');
+        const cardGoodBrand = document.querySelector('.card-good__brand');
+        const cardGoodTitle = document.querySelector('.card-good__title');
+        const cardGoodPrice = document.querySelector('.card-good__price');
+        const cardGoodColor = document.querySelector('.card-good__color');
+        const cardGoodSelectWrapper = document.querySelectorAll('.card-good__select__wrapper');
+        const cardGoodColorList = document.querySelector('.card-good__color-list');
+        const cardGoodSizes = document.querySelector('.card-good__sizes');
+        const cardGoodSizesList = document.querySelector('.card-good__sizes-list');
+        const cardGoodBuy = document.querySelector('.card-good__buy');
+
+        const renderCardGood = ([{brand, name, cost, color, sizes, photo}]) => {
+            cardGoodImage.src = `goods-image/${photo}`;
+            cardGoodImage.alt = `${brand} ${name}`;
+            cardGoodBrand.textContent = brand;
+            cardGoodTitle.textContent = name;
+            cardGoodPrice.textContent = `${cost} ₽`;
+            if (color) {
+                cardGoodColor.textContent = color[0];
+                cardGoodColor.dataset.id = 0;
+                cardGoodColorList.innerHTML = generateList(color);
+            } else {
+                cardGoodColor.style.display = 'none'
+            }
+            if (sizes) {
+                cardGoodSizes.textContent = sizes[0];
+                cardGoodSizes.dataset.id = 0;
+                cardGoodSizesList.innerHTML = generateList(sizes);
+            } else {
+                cardGoodSizes.style.display = 'none'
+            }
+        };
+
+        cardGoodSelectWrapper.forEach(item => {
+            item.addEventListener('click', ({target}) => {
+
+                if(target.closest('.card-good__select')) {
+                    target.classList.toggle('card-good__select__open');
+                }
+                if(target.closest('.card-good__select-item')) {
+                    const cardGoodSelect = item.querySelector('.card-good__select');
+                    cardGoodSelect.textContent = target.textContent;
+                    cardGoodSelect.dataset.id = target.dataset.id;
+                    cardGoodSelect.classList.remove('card-good__select__open');
+                }
+            });
+        });
+
+        getGoods(renderCardGood, 'id', hash);
+
+    } catch (err) {
+        console.warn(err);
+    }
 
 });
