@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const headerCityButton = document.querySelector('.header__city-button');
     const cartListGoods = document.querySelector('.cart__list-goods');
     const cartTotalCost = document.querySelector('.cart__total-cost');
+    const cardGoodBuy = document.querySelector('.card-good__buy');
     
     let hash = location.hash.substring(1);
 
@@ -68,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cartListGoods.addEventListener('click', (e) => {
         if (e.target.matches('.btn-delete')) {
             deleteItemCart(e.target.dataset.id);
+            cardGoodBuy.classList.remove('delete');
+            cardGoodBuy.textContent = 'Добавить в корзину';
             renderCart();
         }
     })
@@ -280,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardGoodColorList = document.querySelector('.card-good__color-list');
         const cardGoodSizes = document.querySelector('.card-good__sizes');
         const cardGoodSizesList = document.querySelector('.card-good__sizes-list');
-        const cardGoodBuy = document.querySelector('.card-good__buy');
+        
 
         const renderCardGood = ([{id, brand, name, cost, color, sizes, photo}]) => {
 
